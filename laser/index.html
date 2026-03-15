@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="it">
+<!--
+  ============================================================
+  CSS CARD EXPERIMENTS — #04 LASER
+  ============================================================
+  Tecnica:  WebGL + GLSL fragment shader
+  Effetto:  Fascio laser volumetrico con nebbia procedurale
+            (fbm noise), scie laterali (wisps), dithering
+            e tilt fog che reagisce al mouse.
+            Pulse mode intensifica densità e velocità shader.
+
+  Autore:   Cristian Di Salvo — DSLV.tech
+  AI:       Antigravity AI + Claude (Anthropic)
+  Anno:     2026
+
+  File:
+    index.html  →  struttura HTML e markup della card
+    style.css   →  stili base + laser card (canvas WebGL,
+                   glow, color picker, pulsing mode)
+    script.js   →  vertex shader, fragment shader GLSL (~300 righe),
+                   WebGL init, render loop, uniforms, color picker,
+                   pulse mode, stats animate
+  ============================================================
+-->
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CSS Card Experiment #04 — Laser: fascio WebGL con GLSL shader volumetrico">
+  <title>Laser Card — CSS Card Experiments</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&display=swap"
+        media="print" onload="this.media='all'">
+  <noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&display=swap">
+  </noscript>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="scene">
+    <div class="particles" id="particles" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <div class="header-logos">
+        <svg class="logo-mark" viewBox="0 0 273.65 273.65" width="56" height="56"
+             xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+          <polyline points="24.74 159.23 47.14 181.63 226.35 181.63 271.15 136.83 2.5 136.83 47.35 92.02 226.35 92.02 248.75 114.43"
+            fill="none" stroke="#E8E0C8" stroke-linecap="square" stroke-linejoin="miter" stroke-width="16"/>
+          <polyline points="159.23 248.91 181.63 226.51 181.63 47.3 136.83 2.5 136.83 271.15 92.02 226.31 92.02 47.3 114.43 24.9"
+            fill="none" stroke="#E8E0C8" stroke-linecap="square" stroke-linejoin="miter" stroke-width="16"/>
+        </svg>
+        <svg class="logo-type" viewBox="0 0 225.19 28.27" width="180"
+             fill="none" stroke-linecap="square" stroke-linejoin="miter" stroke-miterlimit="10" stroke-width=".87"
+             xmlns="http://www.w3.org/2000/svg" aria-label="DSLV" role="img">
+          <polygon points=".43 .43 .43 27.84 38.4 27.84 57.4 14.14 38.39 .43 .43 .43" stroke="#E8E0C8"/>
+          <polyline points="69.07 20.99 73.82 27.84 111.82 27.84 121.32 14.14 64.36 14.14 73.86 .43 111.82 .43 116.57 7.28" stroke="#E8E0C8"/>
+          <polyline points="129.43 .43 129.43 27.84 176.9 27.84" stroke="#C4A35A"/>
+          <polyline points="167.79 .43 167.79 14.14 196.27 27.84 224.76 14.14 224.76 .43" stroke="#C4A35A"/>
+        </svg>
+      </div>
+      <p class="header-tagline">CSS Card Experiments</p>
+    </header>
+
+    <div class="cards-container">
+
+      <!--
+        LASER CARD WRAPPER
+        Riceve il tilt 3D via JS su mousemove.
+        mousemove aggiorna anche iMouse uniform nello shader
+        per il fog tilt effect.
+        La classe .pulsing viene aggiunta da JS durante pulse mode.
+      -->
+      <div class="laser-card-wrapper" id="laserCardWrapper">
+
+        <!--
+          CANVAS WEBGL
+          z-index: 1 — sotto il contenuto della card.
+          Il canvas viene ridimensionato DPR-aware in resizeLaserCanvas().
+          Lo shader usa un full-screen triangle (non un quad).
+        -->
+        <canvas class="laser-canvas" id="laserCanvas" aria-hidden="true"></canvas>
+
+        <!-- Glow viola/rosa pulsante CSS attorno al bordo -->
+        <div class="laser-glow" aria-hidden="true"></div>
+
+        <!-- Card body: z-index: 2, background semi-trasparente -->
+        <div class="laser-card" id="laserCard">
+          <div class="laser-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="2" x2="12" y2="6"/>
+              <line x1="12" y1="18" x2="12" y2="22"/>
+              <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/>
+              <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
+              <line x1="2" y1="12" x2="6" y2="12"/>
+              <line x1="18" y1="12" x2="22" y2="12"/>
+              <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/>
+              <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
+              <circle cx="12" cy="12" r="4"/>
+            </svg>
+          </div>
+          <h2 class="laser-card-title">LASER</h2>
+          <p class="laser-card-subtitle">PHOTON FLUX</p>
+          <div class="laser-card-divider" aria-hidden="true"></div>
+          <p class="laser-card-description">
+            Un fascio laser volumetrico con nebbia procedurale
+            e scie luminose, renderizzato via WebGL shader.
+          </p>
+
+          <!-- Stats animate via JS (lerp verso target) -->
+          <div class="laser-card-params" aria-label="Parametri laser">
+            <div class="laser-param">
+              <span class="laser-param-label">WAVELENGTH</span>
+              <span class="laser-param-value" id="laserWavelength" aria-live="polite">780</span>
+              <span class="laser-param-unit">nm</span>
+            </div>
+            <div class="laser-param">
+              <span class="laser-param-label">INTENSITY</span>
+              <span class="laser-param-value" id="laserIntensity" aria-live="polite">0</span>
+              <span class="laser-param-unit">%</span>
+            </div>
+          </div>
+
+          <!--
+            COLOR PICKER
+            Ogni bottone ha data-color (hex) e --btn-color (CSS var).
+            Il click aggiorna l'uniform uColor nello shader via hexToGL().
+          -->
+          <div class="laser-color-picker" role="group" aria-label="Seleziona colore laser">
+            <button class="laser-color-btn active" data-color="#FF79C6" style="--btn-color: #FF79C6" id="colorPink"   aria-label="Rosa"      aria-pressed="true"></button>
+            <button class="laser-color-btn"        data-color="#50FA7B" style="--btn-color: #50FA7B" id="colorGreen"  aria-label="Verde"     aria-pressed="false"></button>
+            <button class="laser-color-btn"        data-color="#8BE9FD" style="--btn-color: #8BE9FD" id="colorCyan"   aria-label="Ciano"     aria-pressed="false"></button>
+            <button class="laser-color-btn"        data-color="#BD93F9" style="--btn-color: #BD93F9" id="colorPurple" aria-label="Viola"     aria-pressed="false"></button>
+            <button class="laser-color-btn"        data-color="#FFB86C" style="--btn-color: #FFB86C" id="colorOrange" aria-label="Arancione" aria-pressed="false"></button>
+          </div>
+
+          <button class="laser-button" id="pulseBtn" aria-label="Attiva modalità Pulse Beam">
+            PULSE BEAM
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <footer class="credits">
+    <div class="credits-inner">
+      <div class="credits-glow"></div>
+      <div class="credits-content">
+        <h3 class="credits-title">✦ CREDITS & ACKNOWLEDGMENTS ✦</h3>
+        <div class="credits-divider"></div>
+        <p class="credits-text">
+          Esperimento #04 — <strong>LASER</strong>: fascio volumetrico
+          renderizzato con WebGL puro. Shader GLSL con fbm noise,
+          wisps animati e full-screen triangle technique.
+        </p>
+        <div class="credits-divider"></div>
+        <div class="credits-thanks">
+          <p class="credits-made-with">
+            Realizzato con <span class="credits-heart">♥</span> da
+            <span class="credits-author">Cristian Di Salvo</span>
+          </p>
+          <p class="credits-ai">
+            Con l'assistenza di
+            <span class="credits-ai-name">Antigravity AI</span>
+            &amp;
+            <span class="credits-claude-name">Claude</span>
+            — pair programming al suo meglio 🚀
+          </p>
+        </div>
+        <p class="credits-year">© 2026 — CSS Card Experiments</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

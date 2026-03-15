@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="it">
+<!--
+  ============================================================
+  CSS CARD EXPERIMENTS — #03 INFERNO
+  ============================================================
+  Tecnica:  Canvas 2D particle system + DOM embers
+  Effetto:  Particelle di fuoco procedurali generate lungo
+            il perimetro della card e animate frame-by-frame.
+            Le braci (embers) sono elementi DOM con animazione
+            CSS keyframe. Eruption mode moltiplica le particelle.
+
+  Autore:   Cristian Di Salvo — DSLV.tech
+  AI:       Antigravity AI + Claude (Anthropic)
+  Anno:     2026
+
+  File:
+    index.html  →  struttura HTML e markup della card
+    style.css   →  stili base + fire card (canvas, glow,
+                   embers, eruption mode)
+    script.js   →  sistema particelle Canvas 2D, fisica base
+                   (velocità, decadimento, colore per vita),
+                   DOM embers, eruption mode, stats animate
+  ============================================================
+-->
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CSS Card Experiment #03 — Inferno: particelle fuoco Canvas 2D procedurali">
+  <title>Inferno Card — CSS Card Experiments</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&display=swap"
+        media="print" onload="this.media='all'">
+  <noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&display=swap">
+  </noscript>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="scene">
+    <div class="particles" id="particles" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <div class="header-logos">
+        <svg class="logo-mark" viewBox="0 0 273.65 273.65" width="56" height="56"
+             xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+          <polyline points="24.74 159.23 47.14 181.63 226.35 181.63 271.15 136.83 2.5 136.83 47.35 92.02 226.35 92.02 248.75 114.43"
+            fill="none" stroke="#E8E0C8" stroke-linecap="square" stroke-linejoin="miter" stroke-width="16"/>
+          <polyline points="159.23 248.91 181.63 226.51 181.63 47.3 136.83 2.5 136.83 271.15 92.02 226.31 92.02 47.3 114.43 24.9"
+            fill="none" stroke="#E8E0C8" stroke-linecap="square" stroke-linejoin="miter" stroke-width="16"/>
+        </svg>
+        <svg class="logo-type" viewBox="0 0 225.19 28.27" width="180"
+             fill="none" stroke-linecap="square" stroke-linejoin="miter" stroke-miterlimit="10" stroke-width=".87"
+             xmlns="http://www.w3.org/2000/svg" aria-label="DSLV" role="img">
+          <polygon points=".43 .43 .43 27.84 38.4 27.84 57.4 14.14 38.39 .43 .43 .43" stroke="#E8E0C8"/>
+          <polyline points="69.07 20.99 73.82 27.84 111.82 27.84 121.32 14.14 64.36 14.14 73.86 .43 111.82 .43 116.57 7.28" stroke="#E8E0C8"/>
+          <polyline points="129.43 .43 129.43 27.84 176.9 27.84" stroke="#C4A35A"/>
+          <polyline points="167.79 .43 167.79 14.14 196.27 27.84 224.76 14.14 224.76 .43" stroke="#C4A35A"/>
+        </svg>
+      </div>
+      <p class="header-tagline">CSS Card Experiments</p>
+    </header>
+
+    <div class="cards-container">
+
+      <!--
+        FIRE CARD WRAPPER
+        Riceve il tilt 3D via JS su mousemove.
+        La classe .erupting viene aggiunta da JS durante eruption mode.
+      -->
+      <div class="fire-card-wrapper" id="fireCardWrapper">
+
+        <!--
+          CANVAS FUOCO
+          Posizionato con inset: -30px (60px più grande della card)
+          per permettere alle fiamme di uscire dal bordo.
+          Le dimensioni in pixel vengono impostate via JS (resizeFireCanvas).
+        -->
+        <canvas class="fire-canvas" id="fireCanvas" aria-hidden="true"></canvas>
+
+        <!-- Glow arancione pulsante CSS attorno al bordo -->
+        <div class="fire-glow" aria-hidden="true"></div>
+
+        <!--
+          EMBER PARTICLES
+          Container per le braci DOM (div .ember).
+          overflow: visible per permettere alle braci di uscire dalla card.
+          Ogni brace viene creata via JS, animata con CSS keyframe emberRise,
+          poi rimossa dopo 3s con setTimeout.
+          Fix puntino: il container ha overflow:hidden sul wrapper esterno.
+        -->
+        <div class="ember-particles" id="emberParticles" aria-hidden="true"></div>
+
+        <!-- Card body -->
+        <div class="fire-card" id="fireCard">
+          <div class="fire-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 12c2-2.96 0-7-1-8 0 3.038-1.773 4.741-3 6-1.226 1.26-2 3.24-2 5a6 6 0 1 0 12 0c0-1.532-1.056-3.94-2-5-1.786 3-2.791 3-4 2z"/>
+            </svg>
+          </div>
+          <h2 class="fire-card-title">INFERNO</h2>
+          <p class="fire-card-subtitle">PLASMA CORE</p>
+          <div class="fire-card-divider" aria-hidden="true"></div>
+          <p class="fire-card-description">
+            Un esperimento per creare un bordo fiammeggiante
+            con particelle di fuoco procedurali e braci volanti.
+          </p>
+
+          <!-- Stats animate via JS (lerp verso target) -->
+          <div class="fire-card-temps" aria-label="Parametri termici">
+            <div class="fire-temp">
+              <span class="fire-temp-value" id="fireTemp" aria-live="polite">0</span>
+              <span class="fire-temp-unit">°C</span>
+            </div>
+            <div class="fire-temp">
+              <span class="fire-temp-value" id="fireFuel" aria-live="polite">0</span>
+              <span class="fire-temp-unit">%</span>
+            </div>
+          </div>
+
+          <button class="fire-button" id="igniteBtn" aria-label="Attiva modalità Eruption">
+            IGNITE
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <footer class="credits">
+    <div class="credits-inner">
+      <div class="credits-glow"></div>
+      <div class="credits-content">
+        <h3 class="credits-title">✦ CREDITS & ACKNOWLEDGMENTS ✦</h3>
+        <div class="credits-divider"></div>
+        <p class="credits-text">
+          Esperimento #03 — <strong>INFERNO</strong>: sistema particelle Canvas 2D
+          con fisica base e braci DOM animate via CSS keyframes.
+        </p>
+        <div class="credits-divider"></div>
+        <div class="credits-thanks">
+          <p class="credits-made-with">
+            Realizzato con <span class="credits-heart">♥</span> da
+            <span class="credits-author">Cristian Di Salvo</span>
+          </p>
+          <p class="credits-ai">
+            Con l'assistenza di
+            <span class="credits-ai-name">Antigravity AI</span>
+            &amp;
+            <span class="credits-claude-name">Claude</span>
+            — pair programming al suo meglio 🚀
+          </p>
+        </div>
+        <p class="credits-year">© 2026 — CSS Card Experiments</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

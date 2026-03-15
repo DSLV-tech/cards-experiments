@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="it">
+<!--
+  ============================================================
+  CSS CARD EXPERIMENTS — #02 TITANIUM
+  ============================================================
+  Tecnica:  CSS gradients + JavaScript mouse tracking
+  Effetto:  Cornice metallica brushed-steel con 4 fasce CSS,
+            viti decorative negli angoli, riflesso dinamico
+            che segue il cursore via JS, tilt 3D al mousemove.
+            Polish mode illumina la cornice con brightness().
+
+  Autore:   Cristian Di Salvo — DSLV.tech
+  AI:       Antigravity AI + Claude (Anthropic)
+  Anno:     2026
+
+  File:
+    index.html  →  struttura HTML e markup della card
+    style.css   →  stili base + cornice metallica (4 fasce,
+                   viti, riflesso, polish animation)
+    script.js   →  mouse tracking riflesso, tilt 3D,
+                   polish mode
+  ============================================================
+-->
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CSS Card Experiment #02 — Titanium: cornice metallica con riflessi dinamici">
+  <title>Titanium Card — CSS Card Experiments</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&display=swap"
+        media="print" onload="this.media='all'">
+  <noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&display=swap">
+  </noscript>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="scene">
+    <div class="particles" id="particles" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <div class="header-logos">
+        <svg class="logo-mark" viewBox="0 0 273.65 273.65" width="56" height="56"
+             xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+          <polyline points="24.74 159.23 47.14 181.63 226.35 181.63 271.15 136.83 2.5 136.83 47.35 92.02 226.35 92.02 248.75 114.43"
+            fill="none" stroke="#E8E0C8" stroke-linecap="square" stroke-linejoin="miter" stroke-width="16"/>
+          <polyline points="159.23 248.91 181.63 226.51 181.63 47.3 136.83 2.5 136.83 271.15 92.02 226.31 92.02 47.3 114.43 24.9"
+            fill="none" stroke="#E8E0C8" stroke-linecap="square" stroke-linejoin="miter" stroke-width="16"/>
+        </svg>
+        <svg class="logo-type" viewBox="0 0 225.19 28.27" width="180"
+             fill="none" stroke-linecap="square" stroke-linejoin="miter" stroke-miterlimit="10" stroke-width=".87"
+             xmlns="http://www.w3.org/2000/svg" aria-label="DSLV" role="img">
+          <polygon points=".43 .43 .43 27.84 38.4 27.84 57.4 14.14 38.39 .43 .43 .43" stroke="#E8E0C8"/>
+          <polyline points="69.07 20.99 73.82 27.84 111.82 27.84 121.32 14.14 64.36 14.14 73.86 .43 111.82 .43 116.57 7.28" stroke="#E8E0C8"/>
+          <polyline points="129.43 .43 129.43 27.84 176.9 27.84" stroke="#C4A35A"/>
+          <polyline points="167.79 .43 167.79 14.14 196.27 27.84 224.76 14.14 224.76 .43" stroke="#C4A35A"/>
+        </svg>
+      </div>
+      <p class="header-tagline">CSS Card Experiments</p>
+    </header>
+
+    <div class="cards-container">
+
+      <!--
+        METAL CARD WRAPPER
+        Riceve il tilt 3D via JS su mousemove.
+        La classe .polishing viene aggiunta da JS durante il polish mode.
+      -->
+      <div class="metal-card-wrapper" id="metalCardWrapper">
+
+        <!--
+          CORNICE METALLICA
+          4 fasce posizionate absolute (top, right, bottom, left),
+          ognuna con un linear-gradient che simula brushed steel.
+          Le viti sono div con radial-gradient + ::before/::after (croce).
+          Il riflesso è un radial-gradient spostato via JS.
+        -->
+        <div class="metal-frame" aria-hidden="true">
+          <div class="metal-frame-top"></div>
+          <div class="metal-frame-right"></div>
+          <div class="metal-frame-bottom"></div>
+          <div class="metal-frame-left"></div>
+          <div class="metal-screw metal-screw-tl"></div>
+          <div class="metal-screw metal-screw-tr"></div>
+          <div class="metal-screw metal-screw-bl"></div>
+          <div class="metal-screw metal-screw-br"></div>
+          <!-- Il centro del gradient viene aggiornato via JS su mousemove -->
+          <div class="metal-reflection" id="metalReflection"></div>
+        </div>
+
+        <!-- Card body interna alla cornice (inset: 14px) -->
+        <div class="metal-card" id="metalCard">
+          <div class="metal-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+              <path d="M2 17l10 5 10-5"/>
+              <path d="M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <h2 class="metal-card-title">TITANIUM</h2>
+          <p class="metal-card-subtitle">FORGED ALLOY</p>
+          <div class="metal-card-divider" aria-hidden="true"></div>
+          <p class="metal-card-description">
+            Un esperimento per creare un bordo metallico iperrrealistico
+            con riflessi dinamici e texture brushed metal.
+          </p>
+
+          <!-- Barre materiale: width inline → animazione CSS transition -->
+          <div class="metal-card-specs" aria-label="Specifiche materiale">
+            <div class="metal-spec">
+              <span class="metal-spec-label">DUREZZA</span>
+              <div class="metal-spec-bar" role="progressbar" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100">
+                <div class="metal-spec-fill" style="width:85%"></div>
+              </div>
+            </div>
+            <div class="metal-spec">
+              <span class="metal-spec-label">DENSITÀ</span>
+              <div class="metal-spec-bar" role="progressbar" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100">
+                <div class="metal-spec-fill" style="width:62%"></div>
+              </div>
+            </div>
+            <div class="metal-spec">
+              <span class="metal-spec-label">RIFLESSO</span>
+              <div class="metal-spec-bar" role="progressbar" aria-valuenow="94" aria-valuemin="0" aria-valuemax="100">
+                <div class="metal-spec-fill" style="width:94%"></div>
+              </div>
+            </div>
+          </div>
+
+          <button class="metal-button" id="polishBtn" aria-label="Attiva effetto lucidatura">
+            POLISH SURFACE
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <footer class="credits">
+    <div class="credits-inner">
+      <div class="credits-glow"></div>
+      <div class="credits-content">
+        <h3 class="credits-title">✦ CREDITS & ACKNOWLEDGMENTS ✦</h3>
+        <div class="credits-divider"></div>
+        <p class="credits-text">
+          Esperimento #02 — <strong>TITANIUM</strong>: cornice brushed-metal
+          costruita con CSS gradients puri, riflesso dinamico e tilt 3D via JavaScript.
+        </p>
+        <div class="credits-divider"></div>
+        <div class="credits-thanks">
+          <p class="credits-made-with">
+            Realizzato con <span class="credits-heart">♥</span> da
+            <span class="credits-author">Cristian Di Salvo</span>
+          </p>
+          <p class="credits-ai">
+            Con l'assistenza di
+            <span class="credits-ai-name">Antigravity AI</span>
+            &amp;
+            <span class="credits-claude-name">Claude</span>
+            — pair programming al suo meglio 🚀
+          </p>
+        </div>
+        <p class="credits-year">© 2026 — CSS Card Experiments</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

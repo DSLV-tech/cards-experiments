@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="it">
+<!--
+  ============================================================
+  CSS CARD EXPERIMENTS — #05 LIQUID GLASS
+  ============================================================
+  Tecnica:  SVG feTurbulence + feDisplacementMap + Glassmorphism
+  Effetto:  Effetto vetro liquido con distorsione SVG animata,
+            blob colorati animati sullo sfondo, riflesso dinamico
+            che segue il cursore, tilt 3D.
+            Morph mode intensifica la distorsione e i blob.
+
+  Autore:   Cristian Di Salvo — DSLV.tech
+  AI:       Antigravity AI + Claude (Anthropic)
+  Anno:     2026
+
+  File:
+    index.html  →  struttura HTML, blob layer, SVG filter
+                   (feTurbulence + feDisplacementMap)
+    style.css   →  stili base + glass card (blob, distortion,
+                   reflection, border iridescente, morph mode)
+    script.js   →  animazione baseFrequency SVG via rAF,
+                   mouse tracking riflesso + tilt 3D,
+                   morph mode, stats animate
+  ============================================================
+-->
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CSS Card Experiment #05 — Liquid Glass: distorsione SVG feTurbulence con glassmorphism">
+  <title>Liquid Glass Card — CSS Card Experiments</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&display=swap"
+        media="print" onload="this.media='all'">
+  <noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&display=swap">
+  </noscript>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="scene">
+    <div class="particles" id="particles" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <div class="header-logos">
+        <svg class="logo-mark" viewBox="0 0 273.65 273.65" width="56" height="56"
+             xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+          <polyline points="24.74 159.23 47.14 181.63 226.35 181.63 271.15 136.83 2.5 136.83 47.35 92.02 226.35 92.02 248.75 114.43"
+            fill="none" stroke="#E8E0C8" stroke-linecap="square" stroke-linejoin="miter" stroke-width="16"/>
+          <polyline points="159.23 248.91 181.63 226.51 181.63 47.3 136.83 2.5 136.83 271.15 92.02 226.31 92.02 47.3 114.43 24.9"
+            fill="none" stroke="#E8E0C8" stroke-linecap="square" stroke-linejoin="miter" stroke-width="16"/>
+        </svg>
+        <svg class="logo-type" viewBox="0 0 225.19 28.27" width="180"
+             fill="none" stroke-linecap="square" stroke-linejoin="miter" stroke-miterlimit="10" stroke-width=".87"
+             xmlns="http://www.w3.org/2000/svg" aria-label="DSLV" role="img">
+          <polygon points=".43 .43 .43 27.84 38.4 27.84 57.4 14.14 38.39 .43 .43 .43" stroke="#E8E0C8"/>
+          <polyline points="69.07 20.99 73.82 27.84 111.82 27.84 121.32 14.14 64.36 14.14 73.86 .43 111.82 .43 116.57 7.28" stroke="#E8E0C8"/>
+          <polyline points="129.43 .43 129.43 27.84 176.9 27.84" stroke="#C4A35A"/>
+          <polyline points="167.79 .43 167.79 14.14 196.27 27.84 224.76 14.14 224.76 .43" stroke="#C4A35A"/>
+        </svg>
+      </div>
+      <p class="header-tagline">CSS Card Experiments</p>
+    </header>
+
+    <div class="cards-container">
+
+      <!--
+        GLASS CARD WRAPPER
+        overflow: hidden + border-radius: 20px → clip dei blob.
+        Riceve il tilt 3D via JS su mousemove.
+        La classe .morphing viene aggiunta da JS durante morph mode.
+
+        Stack di layer (dal basso verso l'alto):
+          z-index 0 → .glass-bg-layer (blob animati con blur)
+          z-index 1 → .glass-distortion (SVG filter backdrop-filter)
+          z-index 2 → .glass-border (bordo iridescente)
+          z-index 3 → .glass-reflection (radial-gradient mouse)
+          z-index 4 → .glass-card (contenuto, background trasparente)
+      -->
+      <div class="glass-card-wrapper" id="glassCardWrapper">
+
+        <!--
+          BLOB LAYER
+          4 cerchi colorati con filter:blur(40px) che creano
+          lo sfondo cromatico deformato dal layer di distorsione.
+          I blob sono animati con CSS keyframe blobFloat.
+        -->
+        <div class="glass-bg-layer" id="glassBgLayer" aria-hidden="true">
+          <div class="glass-blob glass-blob-1"></div>
+          <div class="glass-blob glass-blob-2"></div>
+          <div class="glass-blob glass-blob-3"></div>
+          <div class="glass-blob glass-blob-4"></div>
+        </div>
+
+        <!--
+          DISTORTION LAYER
+          Applica il filtro #liquidFilter (feTurbulence + feDisplacementMap).
+          backdrop-filter: blur + saturate crea l'effetto glass.
+          Il baseFrequency di feTurbulence viene animato via JS.
+        -->
+        <div class="glass-distortion" id="glassDistortion" aria-hidden="true"></div>
+
+        <!-- Riflesso luce: radial-gradient aggiornato via JS su mousemove -->
+        <div class="glass-reflection" id="glassReflection" aria-hidden="true"></div>
+
+        <!-- Bordo vetro iridescente con animazione CSS glassShimmer -->
+        <div class="glass-border" aria-hidden="true"></div>
+
+        <!-- Card body: contenuto della card -->
+        <div class="glass-card" id="glassCard">
+          <div class="glass-card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+            </svg>
+          </div>
+          <h2 class="glass-card-title">LIQUID</h2>
+          <p class="glass-card-subtitle">GLASS MORPH</p>
+          <div class="glass-card-divider" aria-hidden="true"></div>
+          <p class="glass-card-description">
+            Un effetto vetro liquido con distorsione SVG, blob animati
+            e riflessi dinamici che seguono il cursore.
+          </p>
+
+          <!-- Metriche animate via JS (lerp verso target) -->
+          <div class="glass-card-metrics" aria-label="Metriche ottiche">
+            <div class="glass-metric">
+              <span class="glass-metric-label">REFRACTION</span>
+              <span class="glass-metric-value" id="glassRefraction" aria-live="polite">0</span>
+              <span class="glass-metric-unit">idx</span>
+            </div>
+            <div class="glass-metric">
+              <span class="glass-metric-label">VISCOSITY</span>
+              <span class="glass-metric-value" id="glassViscosity" aria-live="polite">0</span>
+              <span class="glass-metric-unit">cP</span>
+            </div>
+          </div>
+
+          <button class="glass-button" id="morphBtn" aria-label="Attiva effetto Morph Glass">
+            MORPH GLASS
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!--
+    SVG FILTER GLOBALE
+    Nascosto fuori dallo schermo (width:0, height:0).
+    Definisce #liquidFilter usato da .glass-distortion via CSS:
+      filter: url(#liquidFilter)
+
+    feTurbulence  → genera rumore frattale (fractalNoise)
+    feDisplacementMap → deforma SourceGraphic usando il rumore
+    feGaussianBlur → morbidisce la deformazione
+    feComposite   → clip al shape originale
+
+    Il baseFrequency di feTurbulence viene aggiornato
+    frame-by-frame da animateTurbulence() in script.js.
+    Durante morph mode, feDisplacementMap scale aumenta da 18 a 35.
+  -->
+  <svg class="svg-filters" xmlns="http://www.w3.org/2000/svg"
+       aria-hidden="true" focusable="false">
+    <defs>
+      <filter id="liquidFilter" x="-10%" y="-10%" width="120%" height="120%">
+        <feTurbulence
+          id="turbulence"
+          type="fractalNoise"
+          baseFrequency="0.015 0.015"
+          numOctaves="3"
+          seed="2"
+          stitchTiles="stitch"
+          result="noise"
+        />
+        <feDisplacementMap
+          in="SourceGraphic"
+          in2="noise"
+          scale="18"
+          xChannelSelector="R"
+          yChannelSelector="G"
+          result="displaced"
+        />
+        <feGaussianBlur in="displaced" stdDeviation="0.8" result="blurred"/>
+        <feComposite in="blurred" in2="SourceGraphic" operator="in"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <footer class="credits">
+    <div class="credits-inner">
+      <div class="credits-glow"></div>
+      <div class="credits-content">
+        <h3 class="credits-title">✦ CREDITS & ACKNOWLEDGMENTS ✦</h3>
+        <div class="credits-divider"></div>
+        <p class="credits-text">
+          Esperimento #05 — <strong>LIQUID GLASS</strong>: distorsione
+          feTurbulence + feDisplacementMap animata via JS, glassmorphism
+          con backdrop-filter e blob colorati.
+        </p>
+        <div class="credits-divider"></div>
+        <div class="credits-thanks">
+          <p class="credits-made-with">
+            Realizzato con <span class="credits-heart">♥</span> da
+            <span class="credits-author">Cristian Di Salvo</span>
+          </p>
+          <p class="credits-ai">
+            Con l'assistenza di
+            <span class="credits-ai-name">Antigravity AI</span>
+            &amp;
+            <span class="credits-claude-name">Claude</span>
+            — pair programming al suo meglio 🚀
+          </p>
+        </div>
+        <p class="credits-year">© 2026 — CSS Card Experiments</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
