@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="it">
+<!--
+  ============================================================
+  CSS CARD EXPERIMENTS - #01 ELECTRIC
+  ============================================================
+  Autore:   Cristian Di Salvo - DSLV.tech
+  AI:       Antigravity AI + Claude (Anthropic)
+  Anno:     2026
+  File:
+    index.html  struttura HTML
+    style.css   stili base + electric card
+    script.js   fulmini SVG, surge mode, stats, tilt 3D
+  ============================================================
+-->
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Electric Card - CSS Card Experiments</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&display=swap"></noscript>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="scene">
+    <div class="particles" id="particles" aria-hidden="true"></div>
+    <header class="site-header">
+      <div class="header-logos">
+        <svg class="logo-mark" viewBox="0 0 273.65 273.65" width="56" height="56" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <polyline points="24.74 159.23 47.14 181.63 226.35 181.63 271.15 136.83 2.5 136.83 47.35 92.02 226.35 92.02 248.75 114.43" fill="none" stroke="#E8E0C8" stroke-linecap="square" stroke-width="16"/>
+          <polyline points="159.23 248.91 181.63 226.51 181.63 47.3 136.83 2.5 136.83 271.15 92.02 226.31 92.02 47.3 114.43 24.9" fill="none" stroke="#E8E0C8" stroke-linecap="square" stroke-width="16"/>
+        </svg>
+        <svg class="logo-type" viewBox="0 0 225.19 28.27" width="180" fill="none" stroke-linecap="square" stroke-width=".87" xmlns="http://www.w3.org/2000/svg" aria-label="DSLV" role="img">
+          <polygon points=".43 .43 .43 27.84 38.4 27.84 57.4 14.14 38.39 .43 .43 .43" stroke="#E8E0C8"/>
+          <polyline points="69.07 20.99 73.82 27.84 111.82 27.84 121.32 14.14 64.36 14.14 73.86 .43 111.82 .43 116.57 7.28" stroke="#E8E0C8"/>
+          <polyline points="129.43 .43 129.43 27.84 176.9 27.84" stroke="#C4A35A"/>
+          <polyline points="167.79 .43 167.79 14.14 196.27 27.84 224.76 14.14 224.76 .43" stroke="#C4A35A"/>
+        </svg>
+      </div>
+      <p class="header-tagline">CSS Card Experiments</p>
+    </header>
+    <div class="cards-container">
+      <div class="card-wrapper" id="cardWrapper">
+        <svg class="electric-border" viewBox="0 0 400 500" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <filter id="glow"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="glow-intense"><feGaussianBlur stdDeviation="6" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="coloredBlur"/><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <g id="lightningGroup" filter="url(#glow)"></g>
+          <g id="lightningGroupIntense" filter="url(#glow-intense)"></g>
+        </svg>
+        <div class="electric-glow" aria-hidden="true"></div>
+        <div class="card" id="card">
+          <div class="card-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          </div>
+          <h2 class="card-title">ELECTRIC</h2>
+          <p class="card-subtitle">SURGE PROTOCOL</p>
+          <div class="card-divider"></div>
+          <p class="card-description">Un esperimento di CSS e JavaScript per creare un effetto di scarica elettrica lungo il bordo di una card.</p>
+          <div class="card-stats">
+            <div class="stat"><span class="stat-value" id="voltage">0</span><span class="stat-label">kV</span></div>
+            <div class="stat"><span class="stat-value" id="frequency">0</span><span class="stat-label">Hz</span></div>
+            <div class="stat"><span class="stat-value" id="power">0</span><span class="stat-label">MW</span></div>
+          </div>
+          <button class="card-button" id="surgeBtn"><span class="btn-text">ACTIVATE SURGE</span><span class="btn-flash" aria-hidden="true"></span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="credits">
+    <div class="credits-inner">
+      <div class="credits-glow"></div>
+      <div class="credits-content">
+        <h3 class="credits-title">✦ CREDITS & ACKNOWLEDGMENTS ✦</h3>
+        <div class="credits-divider"></div>
+        <p class="credits-text">Esperimento #01 — <strong>ELECTRIC</strong>: fulmini procedurali generati con path SVG randomizzati e animati via JavaScript.</p>
+        <div class="credits-divider"></div>
+        <div class="credits-thanks">
+          <p class="credits-made-with">Realizzato con <span class="credits-heart">&#9829;</span> da <span class="credits-author">Cristian Di Salvo</span></p>
+          <p class="credits-ai">Con l'assistenza di <span class="credits-ai-name">Antigravity AI</span> &amp; <span class="credits-claude-name">Claude</span> — pair programming al suo meglio 🚀</p>
+        </div>
+        <p class="credits-year">© 2026 — CSS Card Experiments</p>
+      </div>
+    </div>
+  </footer>
+  <script src="script.js"></script>
+</body>
+</html>
